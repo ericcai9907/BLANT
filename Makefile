@@ -110,7 +110,10 @@ fast-canon-map: $(LIBWAYNE_HOME)/made $(SRCDIR)/fast-canon-map.c | $(SRCDIR)/bla
 
 slow-canon-maps: $(LIBWAYNE_HOME)/made $(SRCDIR)/slow-canon-maps.c | $(SRCDIR)/blant.h $(OBJDIR)/libblant.o
 	$(CC) -o $@ $(OBJDIR)/libblant.o $(SRCDIR)/slow-canon-maps.c $(LIBWAYNE)
-
+motif-map: $(LIBWAYNE_HOME)/made $(SRCDIR)/motif_gen.c | $(SRCDIR)/blant.h $(OBJDIR)/libblant.o
+	$(CC) -o $@ $(OBJDIR)/libblant.o $(SRCDIR)/motif_gen.c $(LIBWAYNE)
+bin-gen: $(LIBWAYNE_HOME)/made $(SRCDIR)/bin_gen.c | $(SRCDIR)/blant.h 
+	$(CC) -o $@  $(SRCDIR)/bin_gen.c $(LIBWAYNE)
 make-orbit-maps: $(LIBWAYNE_HOME)/made $(SRCDIR)/make-orbit-maps.c | $(SRCDIR)/blant.h $(OBJDIR)/libblant.o
 	$(CC) -o $@ $(OBJDIR)/libblant.o $(SRCDIR)/make-orbit-maps.c $(LIBWAYNE)
 
