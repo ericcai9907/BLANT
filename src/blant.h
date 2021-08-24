@@ -56,6 +56,12 @@ typedef unsigned Gint_type;
 
 extern int _numCanon, _numConnectedCanon;
 extern Gint_type _canonList[MAX_CANONICALS];
+//MOD
+#define MAX_PERM 2097152
+#define MAX_EDGE 21
+
+extern Gint_type _derive_mapping[MAX_PERM][MAX_EDGE];
+
 
 #define MAX_ORBITS	79264	// This is the number of orbits for k=8
 
@@ -67,6 +73,8 @@ int orbitListPopulate(char *BUF, int orbit_list[MAX_CANONICALS][MAX_K],  int orb
     int orbit_canon_node_mapping[MAX_ORBITS], int numCanon, int k);
 void orcaOrbitMappingPopulate(char *BUF, int orca_orbit_mapping[58], int k);
 char** convertToEL(char* file); // from convert.cpp
+void motifDerivePopulate(char *BUF, Gint_type derive_mapping[MAX_PERM][MAX_EDGE], int k);
+void readMatrix(char *BUF, Gint_type uploaded_map[MAX_PERM][MAX_EDGE], int k);
 
 // BLANT represents a graphlet using one-half of the adjacency matrix (since we are assuming symmetric, undirected graphs)
 // We have a choice of using the upper or lower triangle. We prefer the lower triangle because that's what Jesse uses
@@ -112,7 +120,7 @@ extern SET *_connectedCanonicals;
 
 enum OutputMode {undef, indexGraphlets, indexOrbits, indexMotifs, indexMotifOrbits,
     predict, predict_merge, graphletFrequency, outputODV, outputGDV,
-    graphletDistribution // used in Windowing
+    graphletDistribution, motifDerivation_Lookup, motifDerivation_Edge // used in Windowing
 };
 extern enum OutputMode _outputMode;
 extern int _outputMapping[MAX_CANONICALS];

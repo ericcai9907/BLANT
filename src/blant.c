@@ -36,6 +36,7 @@ char * _sampleFileName;
 unsigned int _k;
 unsigned int _Bk, _k_small;
 
+Gint_type _derive_mapping[MAX_PERM][MAX_EDGE];
 int _alphaList[MAX_CANONICALS];
 int _numCanon, _numSamples;
 Gint_type _canonList[MAX_CANONICALS]; // map ordinals to integer representation of the canonical
@@ -413,7 +414,7 @@ int RunBlantFromGraph(int k, int numSamples, GRAPH *G)
     {
 	int canon;
 	int orbit_index;
-    case indexGraphlets: case indexOrbits: case indexMotifs: case indexMotifOrbits:
+    case indexGraphlets: case indexOrbits: case indexMotifs: case indexMotifOrbits: case motifDerivation_Edge: case motifDerivation_Lookup:
 	break; // already printed on-the-fly in the Sample/Process loop above
     case graphletFrequency:
 	for(canon=0; canon<_numCanon; canon++) {
@@ -844,6 +845,8 @@ int main(int argc, char *argv[])
 	    case 'd': _outputMode = graphletDistribution; break;
 	    case 'p': _outputMode = predict; break;
 	    case 'q': _outputMode = predict_merge; break;
+        case 'e': _outputMode = motifDerivation_Edge; break;
+        case 'r': _outputMode = motifDerivation_Lookup; break;
 	    default: Fatal("-m%c: unknown output mode \"%c\"", *optarg,*optarg);
 	    break;
 	    }

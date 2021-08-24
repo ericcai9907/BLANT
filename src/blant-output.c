@@ -27,6 +27,28 @@ char *PrintNodePairSorted(int u, char c, int v) {
     return buf;
 }
 
+char *PrintOrbitPairSorted(char c, int orb1, int orb2, int u, int v) {
+    //_orbitList[GintOrdinal][i] and _orbitList[GintOrdinal][j] are passed into function
+    static char buf[BUFSIZ];
+    if (_supportNodeNames) {
+        char *s1=_nodeNames[u], *s2=_nodeNames[v];
+        if (strcmp(s1,s2)<0) { 
+            int temp = orb1;
+            orb1 = orb2;
+            orb2 = temp;
+        }
+        sprintf(buf,"%d%c%d", orb1, c, orb2);
+    }
+    else {
+        if (v == MAX(u,v)) {
+            int temp = orb1;
+            orb1 = orb2;
+            orb2 = temp;
+        }
+        sprintf(buf,"%d%c%d", orb1, c, orb2);
+    }
+    return buf;
+}
 static int IntCmp(const void *a, const void *b)
 {
     int *i = (int*)a, *j = (int*)b;
@@ -152,6 +174,90 @@ char *PrintIndexOrbitsEntry(Gint_type Gint, int GintOrdinal, unsigned Varray[], 
     return buf[which];
 }
 
+void PrintMotifDerivations_Edge(TINY_GRAPH *g, TINY_GRAPH *g_orig, Gint_type Gint, int GintOrdinal, unsigned Varray[], int k) {
+    static int depth;
+    static Boolean initDone;
+    static SET *seen;
+    if (!initDone) {
+        assert(_Bk>0);
+        seen = SetAlloc(_Bk);
+        initDone = true;
+    }
+    if (depth==0) {
+        SetReset(seen);
+    }
+
+    if (SetIn(seen,Gint)) return;
+    SetAdd(seen,Gint);
+
+    char perm[MAX_K];
+    memset(perm, 0, k);
+    ExtractPerm(perm, Gint);
+    char buf[BUFSIZ]; 
+    for (int i = 0; i < k-1; i++) {
+        //if (perm_seen[Gint]) break;
+        for (int j = i+1; j <k; j++) {
+            int is_connected = 0;
+            if (TinyGraphAreConnected(g_orig,perm[i],perm[j])) is_connected = 1;
+            //print in form: canon, node:node, is_edge, orbit:orbit
+            sprintf(buf, "%s %d %s", PrintNodePairSorted(Varray[(int)perm[i]], ':', Varray[(int)perm[j]]), \
+                    is_connected, \
+                    PrintOrbitPairSorted(':', _orbitList[GintOrdinal][i], _orbitList[GintOrdinal][j], Varray[(int)perm[i]], Varray[(int)perm[j]]));
+            puts(buf);
+        }
+    }
+    //perm_seen_edge[Gint] = 1; //this motif has now been seen
+    for (int i = 0; i < k-1; i++) {
+        for (int j = i+1; j < k; j++) {
+            
+            if (TinyGraphAreConnected(g,perm[i],perm[j])) {
+                
+                TinyGraphDisconnect(g,perm[i],perm[j]);
+                Gint = TinyGraph2Int(g,k);
+                GintOrdinal = _K[Gint];
+                if (SetIn(_connectedCanonicals, GintOrdinal)) {
+                    ++depth;
+                    PrintMotifDerivations_Edge(g,g_orig,Gint,GintOrdinal,Varray,k);
+                    --depth;
+                }
+                TinyGraphConnect(g,perm[i],perm[j]);
+            }
+        }
+    }
+}
+static int perm_seen[MAX_PERM]; //static array, so all elements set to 0 on initialization 
+void PrintMotifDerivations_Lookup(TINY_GRAPH *g, Gint_type Gint, Gint_type GintOrdinal,  unsigned Varray[], int k) {
+    char perm[MAX_K];
+    memset(perm, 0, k);
+    ExtractPerm(perm, Gint);
+    char buf[BUFSIZ]; 
+    int edges = k*(k-1)/2;
+    for (int i = 0; i < k-1; i++) {
+        //if (perm_seen[Gint]) break;
+        for (int j = i+1; j <k; j++) {
+            int is_connected = 0;
+            if (TinyGraphAreConnected(g,perm[i],perm[j])) is_connected = 1;
+            //print in form: canon, node:node, is_edge, orbit:orbit
+            sprintf(buf, "%d %s %d %s", Gint, PrintNodePairSorted(Varray[(int)perm[i]], ':', Varray[(int)perm[j]]), \
+                    is_connected, \
+                    PrintOrbitPairSorted(':', _orbitList[GintOrdinal][i], _orbitList[GintOrdinal][j], Varray[(int)perm[i]], Varray[(int)perm[j]]));
+            puts(buf);
+            //counter++;
+        }
+    }
+    perm_seen[Gint] = 1; // add previously printed permutation to perm_seen
+    // next go through each edge in a permutation and recursively call permutation
+    // found by removing an edge, assuming it exists
+    // program will end once done with for loop
+    // if k4 through k7, do this 
+    for (int i = 0; i < edges; i++) {
+            Gint_type Gint_updated = _derive_mapping[Gint][i]; // new Gint found by removing edge
+            // go to next edge to remove in row of permutation matrix if new perm has been seen or it is 0
+            if (perm_seen[Gint_updated] ==1 || Gint_updated == 0) continue; 
+            Gint_type GintOrdinal_updated = _K[Gint_updated];
+            PrintMotifDerivations_Lookup(g, Gint_updated, GintOrdinal_updated, Varray, k); 
+    } 
+}
 Boolean ProcessGraphlet(GRAPH *G, SET *V, unsigned Varray[], const int k, TINY_GRAPH *g)
 {
     Boolean processed = true;
@@ -199,7 +305,21 @@ Boolean ProcessGraphlet(GRAPH *G, SET *V, unsigned Varray[], const int k, TINY_G
 	for(j=0;j<k;j++) ++ODV(Varray[          j ], _orbitList[GintOrdinal][(int)perm[j]]);
 #endif
 	break;
-
+    case motifDerivation_Edge:
+    if (NodeSetSeenRecently(G, Varray, k)) processed=false;
+    else {
+        TINY_GRAPH *g_orig = TinyGraphAlloc(k);
+        g_orig = TinyGraphCopy(g_orig, g);
+        PrintMotifDerivations_Edge(g, g_orig, Gint, GintOrdinal, Varray, k);
+    }
+    break;
+    case motifDerivation_Lookup:
+    if (NodeSetSeenRecently(G, Varray, k)) processed=false;
+    else {
+        PrintMotifDerivations_Lookup(g, Gint, GintOrdinal, Varray, k);
+        memset(perm_seen, 0, sizeof perm_seen);
+    }
+    break;
     default: Abort("ProcessGraphlet: unknown or un-implemented outputMode %d", _outputMode);
 	break;
     }

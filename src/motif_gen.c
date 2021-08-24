@@ -68,7 +68,7 @@ void perm_lookup(void)
     numBits = (k*(k-1))/2;
     int bitMatrixloc[numBits];
     int bitMatrix[k][k];
-    //printf("In perm_lookup!\n");
+    
     if(start == 0) fprintf(fcanon, "%d\n", numBitValues);
     int loc = 0;
     for(int x = 0; x < k; x++)
@@ -82,7 +82,7 @@ void perm_lookup(void)
 
     for(int i=start; i<stop; i++)
     {
-    	//printf("At Loop %d!\n", i);
+    	
     	int derivatives[numBits];
     	int count = 0;
     	decimalToBitArray(bitMatrix,i);
@@ -105,12 +105,12 @@ void perm_lookup(void)
     	}
     	if(count <= numBits-1)
     		{
-    			//printf("At Extras!\n");
+    			
     			for(int rest = count; rest <=numBits-1; rest++) derivatives[rest] = 0;
     		}
     	for( int der = 0; der < numBits; der++)
     	{
-    		//printf("Printing stuffs!\n");
+    		
     		char sep = ' ';
     		fprintf(fcanon, "%d%c", derivatives[der],sep);
     	}
@@ -129,8 +129,6 @@ int main(int argc, char* argv[]){
     if(k<=8) numBitValues = 1 << k*(k-1)/2;
     else numBitValues = 1LL << k*(k-1LL)/2;
     if(stop > numBitValues) stop = numBitValues;
-    //data = malloc(sizeof(xChar)*numBitValues);
-    //done = malloc(sizeof(bool)*numBitValues);
     perm_lookup();
     return 0;
 }

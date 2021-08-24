@@ -4,7 +4,7 @@
 #include "blant.h"
 
 char* _BLANT_DIR = DEFAULT_BLANT_DIR;
-
+char* _MOTIF_DIR = "motif_maps";
 // Given a TINY_GRAPH and k, return the integer ID created from one triangle (upper or lower) of the adjacency matrix.
 Gint_type TinyGraph2Int(TINY_GRAPH *g, int k)
 {
@@ -120,4 +120,34 @@ void orcaOrbitMappingPopulate(char *BUF, int orca_orbit_mapping[58], int k) {
     int numOrbit, i;
     assert(1==fscanf(fp_ord, "%d",&numOrbit));
     for (i=0; i<numOrbit; i++) { assert(1==fscanf(fp_ord, "%d", &orca_orbit_mapping[i])); }
+}
+void motifDerivePopulate(char *BUF, Gint_type derive_mapping[MAX_PERM][MAX_EDGE], int k) // MAX_PERM up to k6 which is 2^15 ==> 32786
+{
+    sprintf(BUF, "%s/%s/motifderivmap%d.txt", _BLANT_DIR, _MOTIF_DIR, k);
+    FILE *fp_ord=fopen(BUF, "r");
+    if(!fp_ord) Fatal("cannot find %s\n", BUF);
+    int numPerm, i, j, edges = k*(k-1)/2;
+    assert(1==fscanf(fp_ord, "%d",&numPerm));
+    for(i =0; i < numPerm; i++) for(j=0; j <edges; j++)
+    {
+        assert(1==fscanf(fp_ord, "%d", &derive_mapping[i][j]));
+    }
+    fclose(fp_ord);
+    return;
+}
+
+void readMatrix(char *BUF, Gint_type uploaded_map[MAX_PERM][MAX_EDGE], int k)
+{
+    sprintf(BUF, "%s/%s/motifderivmap%d.bin", _BLANT_DIR, _MOTIF_DIR, k);
+    FILE *fp = fopen(BUF, "rb");
+    int edges = k*(k-1)/2;
+    int numBitValues = 1<<(edges);
+    //fprintf(stderr,"Edges: %d\n", edges);
+    //fprintf(stderr, "numBitValues: %d\n", numBitValues); 
+    for(int i = 0; i<numBitValues; i++)
+    {
+        fread(&uploaded_map[i], sizeof(int), edges,fp);
+    }
+    
+    fclose(fp);
 }
